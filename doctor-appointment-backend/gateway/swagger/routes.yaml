@@ -1,0 +1,324 @@
+paths:
+  /api/v1/doctors:
+    get:
+      tags:
+        - Doctors
+      summary: Get all doctors
+      responses:
+        '200':
+          description: Successful operation
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Doctor'
+    
+  /api/v1/doctors/search:
+    get:
+      tags:
+        - Doctors
+      summary: Search doctors
+      parameters:
+        - in: query
+          name: specialization
+          schema:
+            type: string
+        - in: query
+          name: city
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful operation
+
+  /api/v1/auth/login:
+    post:
+      tags:
+        - Authentication
+      summary: User login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                email:
+                  type: string
+                password:
+                  type: string
+      responses:
+        '200':
+          description: Login successful
+        '401':
+          description: Invalid credentials
+
+  /api/v1/auth/register:
+    post:
+      tags:
+        - Authentication
+      summary: User registration
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserRegistration'
+      responses:
+        '201':
+          description: User registered successfully
+        '400':
+          description: Invalid input
+
+  /api/v1/appointments:
+    get:
+      tags:
+        - Appointments
+      summary: Get user appointments
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: List of appointments
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Appointment'
+    post:
+      tags:
+        - Appointments
+      summary: Create new appointment
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AppointmentCreate'
+      responses:
+        '201':
+          description: Appointment created successfully
+
+  /api/v1/reviews:
+    get:
+      tags:
+        - Reviews
+      summary: Get doctor reviews
+      parameters:
+        - in: query
+          name: doctorId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of reviews
+    post:
+      tags:
+        - Reviews
+      summary: Create new review
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReviewCreate'
+      responses:
+        '201':
+          description: Review created successfully
+
+  /api/v1/locations/cities:
+    get:
+      tags:
+        - Locations
+      summary: Get all cities
+      responses:
+        '200':
+          description: List of cities
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/City'
+
+  /api/v1/locations/districts/{cityId}:
+    get:
+      tags:
+        - Locations
+      summary: Get districts by city
+      parameters:
+        - in: path
+          name: cityId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: List of districts
+
+  /api/v1/admin/pending-doctors:
+    get:
+      tags:
+        - Admin
+      summary: Get pending doctor applications
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: List of pending doctors
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Doctor'
+
+  /api/v1/admin/doctors/{doctorId}/approve:
+    put:
+      tags:
+        - Admin
+      summary: Approve doctor application
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: doctorId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Doctor approved successfully
+
+  /api/v1/admin/doctors/{doctorId}/reject:
+    put:
+      tags:
+        - Admin
+      summary: Reject doctor application
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: doctorId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Doctor rejected successfully
+
+components:
+  schemas:
+    Doctor:
+      type: object
+      properties:
+        _id:
+          type: string
+        fullName:
+          type: string
+        specialization:
+          type: string
+        rating:
+          type: number
+        address:
+          type: object
+          properties:
+            city:
+              type: string
+            district:
+              type: string
+
+    UserRegistration:
+      type: object
+      required:
+        - email
+        - password
+        - name
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 6
+        name:
+          type: string
+        role:
+          type: string
+          enum: [patient, doctor]
+
+    Appointment:
+      type: object
+      properties:
+        _id:
+          type: string
+        doctorId:
+          type: string
+        patientId:
+          type: string
+        date:
+          type: string
+          format: date-time
+        status:
+          type: string
+          enum: [pending, confirmed, cancelled, completed]
+        notes:
+          type: string
+
+    AppointmentCreate:
+      type: object
+      required:
+        - doctorId
+        - date
+      properties:
+        doctorId:
+          type: string
+        date:
+          type: string
+          format: date-time
+        notes:
+          type: string
+
+    ReviewCreate:
+      type: object
+      required:
+        - doctorId
+        - rating
+      properties:
+        doctorId:
+          type: string
+        rating:
+          type: number
+          minimum: 1
+          maximum: 5
+        comment:
+          type: string
+          maxLength: 500
+
+    City:
+      type: object
+      properties:
+        _id:
+          type: string
+        name:
+          type: string
+        code:
+          type: string
+
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT 

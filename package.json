@@ -1,0 +1,6 @@
+{
+  "scripts": {
+    "deps:check": "npx depcheck",
+    "clean": "rm -rf node_modules && npm install"
+  }
+}
